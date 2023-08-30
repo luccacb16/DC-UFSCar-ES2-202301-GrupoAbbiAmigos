@@ -53,6 +53,9 @@ import net.sf.jabref.logic.util.strings.StringUtil;
 import net.sf.jabref.model.database.BibDatabases;
 import net.sf.jabref.model.entry.BibEntry;
 
+// Importando o CSVImporter
+import net.sf.jabref.importer.fileformat.CSVImporter;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
