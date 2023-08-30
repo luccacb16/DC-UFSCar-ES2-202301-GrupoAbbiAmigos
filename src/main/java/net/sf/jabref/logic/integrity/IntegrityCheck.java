@@ -22,6 +22,9 @@ import net.sf.jabref.model.entry.BibEntry;
 import net.sf.jabref.model.entry.FileField;
 import net.sf.jabref.model.entry.ParsedFileField;
 
+// Importando calendário para a validação do ano no CheckIntegrity
+import java.util.Calendar;
+
 public class IntegrityCheck {
 
     private final BibDatabaseContext bibDatabaseContext;
@@ -64,6 +67,9 @@ public class IntegrityCheck {
         result.addAll(new BibStringChecker().check(entry));
         result.addAll(new HTMLCharacterChecker().check(entry));
         result.addAll(new ISSNChecker().check(entry));
+
+        // Adicionar checagem da bibtexkey
+        result.addAll(new BibTexKeyChecker().check(entry));
 
         return result;
     }
@@ -282,6 +288,52 @@ public class IntegrityCheck {
 
             if (!CONTAINS_FOUR_DIGIT.test(value.get().trim())) {
                 return Collections.singletonList(new IntegrityMessage(Localization.lang("should contain a four digit number"), entry, "year"));
+            }
+
+            int ano = Integer.parseInt(value.get());
+
+            // Validação do ano de acordo com o calendario da linguagem
+            Calendar calendario = Calendar.getInstance();
+            int anoAtual = calendario.get(Calendar.YEAR);
+
+            // Ano futuro
+            if (ano > anoAtual) {
+                return Collections.singletonList(new IntegrityMessage(
+                        Localization.lang("ano de publicação inválido: ano futuro"), entry, "year"));
+            }
+
+            // Ano negativo
+            if (ano < 0) {
+                return Collections.singletonList(new IntegrityMessage(
+                        Localization.lang("ano de publicação inválido: ano negativo"), entry, "year"));
+            }
+
+            return Collections.emptyList();
+        }
+    }
+
+    // Classe que faz a validação da bibtexkey no Check Integrity
+    private static class BibTexKeyChecker implements Checker {
+
+        @Override
+        public List<IntegrityMessage> check(BibEntry entry) {
+            Optional<String> value = entry.getFieldOptional("bibtexkey");
+            if (!value.isPresent()) {
+                return Collections.emptyList();
+            }
+
+            String bibtexkey = value.get();
+
+            // Validação da bibtexkey: ao menos 2 caracteres
+            if (bibtexkey.length() < 2) {
+                return Collections.singletonList(new IntegrityMessage(
+                        Localization.lang("bibtextkey deve ter ao menos 2 caracteres"), entry, "bibtexkey"));
+            }
+
+            // Validação da bibtexkey: começar com letra
+            if (!Character.isLetter(bibtexkey.charAt(0))) {
+                return Collections.singletonList(new IntegrityMessage(
+                        Localization.lang("bibtextkey deve começar com uma letra"), entry, "bibtexkey"));
             }
 
             return Collections.emptyList();
